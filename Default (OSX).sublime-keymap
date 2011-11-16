@@ -1,3 +1,3 @@
 [
-	{ "keys": ["super+r"], "command": "copy_function" } 
+  { "keys": ["super+shift+space"], "command": "copy_function" }
 ]

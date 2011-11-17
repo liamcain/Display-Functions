@@ -1,6 +1,5 @@
-## Display Functions
+## Display Functions (Sublime Text 2 Plugin)
 
-####Finds an objects type, adds the methods of the object into the autocomplete box, and actives autocomplete
+###*Java Only*
 
-
-####Got the autocomplete working.  Next is loading in the methods...
+####Displays an object's methods in autocomplete box.  Opens on "."

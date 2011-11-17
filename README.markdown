@@ -1,5 +1,5 @@
 # Function Copier
 
-### Plugin that opens "goto anything," filled it with the class of whatever object you have selected. (Only works with Java at the moment)
+###Finds an objects type, adds the methods of the object into the autocomplete box, and actives autocomplete
 
-####Todo: copy the function name, escape the overlap panel, and paste function name in the window
+###Problems: I can't seem to add anything into the autocomplete (something worked once, but it was a fluke and I can't reproduce); I don't know how to search through a different file (see comments for more info)

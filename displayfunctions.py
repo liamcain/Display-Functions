@@ -33,23 +33,31 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
     def add_functions(self, classname):
         
         this_file = self.view.file_name()
+        print this_file
+        
+        dir_len = this_file.rfind('/') #(for OSX)
 
-        dir_len = this_file.rfind('/')
-        this_dir = this_file[:(dir_len + 1)] # + 1 for the '/''
+        if not dir_len > 0:
+            dir_len = this_file.rfind('\\') #(for Windows)
 
+        this_dir = this_file[:(dir_len + 1)] # + 1 for the '/'
         filename = this_dir + classname + ".java"
+
+        print filename
 
         with open(filename, 'r') as f:
             read_data = f.read()
-        methods = re.findall("(\w+)\s*\(\)", read_data)
+        methods = re.findall("(\w+)\s*\(\)", read_data) #Regex taken from Java.tmLanguage (needs fix)
 
         methods = list(set(methods)) #to remove duplicates
 
         print 'methods: '
         print methods
 
-        # for m in methods:
-        #     completions.append(m)
+        del completions[:]
+
+        for m in methods:
+            completions.append(m + "()")
     
 
 class FillAutoComplete(sublime_plugin.EventListener):

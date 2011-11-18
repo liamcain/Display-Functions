@@ -47,7 +47,7 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
 
         with open(filename, 'r') as f:
             read_data = f.read()
-        methods = re.findall("(\w+)\s*\(\)", read_data) #Regex taken from Java.tmLanguage (needs fix)
+        methods = re.findall("(\w+)\s*\(", read_data) #Regex taken from Java.tmLanguage (needs fix)
 
         methods = list(set(methods)) #to remove duplicates
 

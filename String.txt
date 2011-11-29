@@ -1,0 +1,11 @@
+concat
+equals
+indexOf
+lastIndexOf
+length
+replace
+split
+startsWith
+substring
+trim
+valueOf

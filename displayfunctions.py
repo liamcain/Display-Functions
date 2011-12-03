@@ -20,9 +20,6 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
         word_checker = self.view.substr(word)
         word_prev = self.view.substr(word.begin() - 1)
 
-        print 'is_method::checker: ', word_checker
-        print 'is_method::word_prev: ', word_prev
-
         if ' ' in word_prev:
             return False
         if ')' in word_checker:
@@ -45,9 +42,10 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
         if ')' in self.view.substr(sel.begin() - 1):
             word = self.prev(word)
         object_type = self.get_obj_type(word)
+        if not 'void' in object_type:
+            self.add_functions(object_type)
+            self.view.run_command('auto_complete', {'disable_auto_insert': True})
 
-        self.add_functions(object_type)
-        self.view.run_command('auto_complete', {'disable_auto_insert': True})
         return
 
     def make_filename(self, classname):
@@ -77,16 +75,13 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
         return self.view.word(word.end() + 1)
 
     def get_return_type(self, current_word, method_region):
-        #current_word = self.view.substr(current_region)
         method = self.view.substr(method_region)
         filename = self.make_filename(current_word)
-        print 'get_return_type::filename: ', filename
-        
+
         with open(filename, 'r') as f:
             read_data = f.read()
         return_type = re.search('([\w]+)(?=(?![\n\r]+)\s*' + re.escape(method) + ')', read_data)
         return_type = return_type.group()
-        print 'get_return_type::I FOUND: ', return_type
 
         return return_type
 
@@ -105,7 +100,6 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
         regions = self.view.find_all('(?<![\\w])' + re.escape(string) + '\\b')
         for r in regions:
             prev_word = self.prev(r)
-            print self.view.substr(prev_word)
 
             if "storage.type" in self.view.scope_name(prev_word.begin()):
                 return self.view.substr(prev_word)
@@ -124,6 +118,8 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
     def add_functions(self, classname):
 
         methods = self.check_str(classname, "String")
+        methods = self.check_str(classname, "Object")
+
         if not methods:
 
             filename = self.make_filename(classname)
@@ -137,7 +133,6 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
         del completions[:]
 
         for m in methods:
-            m.strip('h')
             completions.append(m + "()")
     
 

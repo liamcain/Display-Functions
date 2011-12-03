@@ -124,7 +124,6 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
     def add_functions(self, classname):
 
         methods = self.check_str(classname, "String")
-
         if not methods:
 
             filename = self.make_filename(classname)

@@ -1,122 +1,147 @@
-# import sublime
-# import sublime_plugin
-# import re
-# import os
+import sublime
+import sublime_plugin
+import re
+import os
 
-# completions = []
-
-# class DisplayFunctionsCommand(sublime_plugin.TextCommand):
-    
-#     def run(self, edit):
-
-#         sel = self.view.sel()[0]
-#         word = self.view.word(sel.end() - 1)
-#         string = self.view.substr(word).strip()
-
-#         if not self.is_proceeding_method(word):
-
-#             regions = self.view.find_all('(?<![\\w])' + re.escape(string) + '\\b')
-
-#             self.view.insert(edit, sel.end(), ".")
-
-#             for r in regions:
-#                 prev_end = r.begin() - 2
-#                 prev_word = self.view.word(prev_end)
-
-#                 if "storage.type" in self.view.scope_name(prev_word.begin()):
-#                     print "Class: " + self.view.substr(prev_word)
-#                     self.add_functions(self.view.substr(prev_word))
-
-#                     self.view.run_command('auto_complete', {'disable_auto_insert': True})
-#                     break
-            
-#         return
-
-#     def get_package_dir(self):
-#         return os.path.join(sublime.packages_path(), "Display-Functions")
+completions = []
+#
+#
+#  HAS PROBLEM DEALING WITH ' (). '
+#  Add fix to 'prev' and 'next' (if prev is '.' - 2)
+#
+class DisplayFunctionsCommand(sublime_plugin.TextCommand):
 
 
-#     def prev(self, word):
-#         return self.view.word(word.begin() - 2)
-#     def next(self, word):
-#         return self.view.word(word.end() + 2)
+    # start at last word.  Get object type, return completions
+    # Get object type: if word is not an object (if it's a method), get object type of prev word.  Then set object type as the return type of the current word (method)
 
-#     def get_type(self, current_word):
-#         string = self.view.substr(current_word)
-#         regions = self.view.find_all('(?<![\\w])' + re.escape(string) + '\\b')
-#         for r in regions:
-#             prev_word = self.prev(r)
-#             print self.view.substr(prev_word)
 
-#             if "storage.type" in self.view.scope_name(prev_word.begin()):
-#                 return self.view.substr(prev_word)
+    def is_method(self, word):
+        word_checker = self.view.substr(word)
+        word_prev = self.view.substr(word.begin() - 1)
+
+        print 'is_method::checker: ', word_checker
+        print 'is_method::word_prev: ', word_prev
+
+        if ' ' in word_prev:
+            return False
+        if ')' in word_checker:
+            return True
+        if '.' in word_checker:
+            return True
+        if ')' in word_prev:
+            return True
+        if '.' in word_prev:
+            return True
+        return False
+
+    def run(self, edit):
+
+        sel = self.view.sel()[0]
+        word = self.view.word(sel.end() - 1)
+
+        self.view.insert(edit, sel.end(), ".")
+
+        if ')' in self.view.substr(sel.begin() - 1):
+            word = self.prev(word)
+        object_type = self.get_obj_type(word)
+
+        self.add_functions(object_type)
+        self.view.run_command('auto_complete', {'disable_auto_insert': True})
+        return
+
+    def make_filename(self, classname):
+        this_file = self.view.file_name()
+
+        dir_len = this_file.rfind('/')  # (for OSX)
+
+        if not dir_len > 0:
+            dir_len = this_file.rfind('\\')  # (for Windows)
+
+        this_dir = this_file[:(dir_len + 1)]  # + 1 for the '/'
+        return this_dir + classname + ".java"
+
+    def get_package_dir(self):
+        return os.path.join(sublime.packages_path(), "Display-Functions")
+
+    def prev(self, word):
+
+        if '.' in self.view.substr(word.begin() - 1):
+            num = 3
+        else:
+            num = 1
+
+        return self.view.word(word.begin() - num)
+
+    def next(self, word):
+        return self.view.word(word.end() + 1)
+
+    def get_return_type(self, current_word, method_region):
+        #current_word = self.view.substr(current_region)
+        method = self.view.substr(method_region)
+        filename = self.make_filename(current_word)
+        print 'get_return_type::filename: ', filename
         
+        with open(filename, 'r') as f:
+            read_data = f.read()
+        return_type = re.search('([\w]+)(?=(?![\n\r]+)\s*' + re.escape(method) + ')', read_data)
+        return_type = return_type.group()
+        print 'get_return_type::I FOUND: ', return_type
 
-    
-#     def is_proceeding_method(self, word):
-#         prev_word = self.prev(word)
-#         while "storage.type" in self.view.scope_name(prev_word.begin()):
-#             prev_word = self.view.word(prev_word.begin() - 2)
-#         current_word = prev_word
+        return return_type
+
+    def get_obj_type(self, word_region):
+        obj_type = None
+        prev_word = self.prev(word_region)
         
-#         word_type = self.get_type(current_word)
-#         regions = self.view.find_all('(?<![\\w])' + re.escape(word_type) + '\\b')
+        #recursive case
+        if self.is_method(word_region):
+            prev_obj_type = self.get_obj_type(prev_word)
+            obj_type = self.get_return_type(prev_obj_type, word_region)
+            return obj_type
 
+         # else:
+        string = self.view.substr(word_region)
+        regions = self.view.find_all('(?<![\\w])' + re.escape(string) + '\\b')
+        for r in regions:
+            prev_word = self.prev(r)
+            print self.view.substr(prev_word)
 
-#         for r in regions:
-#             prev_word = self.prev(r)
-#             print self.view.substr(prev_word)
+            if "storage.type" in self.view.scope_name(prev_word.begin()):
+                return self.view.substr(prev_word)
 
-#             if "storage.type" in self.view.scope_name(prev_word.begin()):
-#                 print "method"
-#                 with open(filename, 'r') as f:
-#                     read_data = f.read()
-#                 current_word = self.next(current_word)
-#                 return_type = self.prev(re.find(current_word))
-#                 print return_type
-#                 return True
-                
-
-#     def check_str(self, classname, check_name):
-#         if classname == check_name:
-#             check_path = os.path.join(self.get_package_dir(), check_name)
-#             check_path += '.txt'
-#             print check_path
+    def check_str(self, classname, check_name):
+        if classname == check_name:
+            check_path = os.path.join(self.get_package_dir(), check_name)
+            check_path += '.txt'
             
-#             with open(check_path, 'r') as f:
-#                 str_fun = f.read().splitlines()
-#             return str_fun
+            with open(check_path, 'r') as f:
+                str_fun = f.read().splitlines()
+            return str_fun
 
-#     #This function will take a classname and return a list of all the class methods
-#     #Will use find_by_selector(selector)
-#     def add_functions(self, classname):
+    #This function will take a classname and return a list of all the class methods
+    #Will use find_by_selector(selector)
+    def add_functions(self, classname):
 
-#         methods = self.check_str(classname, "String")
+        methods = self.check_str(classname, "String")
 
-#         if not methods:
-#             this_file = self.view.file_name()
+        if not methods:
 
-#             dir_len = this_file.rfind('/') #(for OSX)
+            filename = self.make_filename(classname)
 
-#             if not dir_len > 0:
-#                 dir_len = this_file.rfind('\\') #(for Windows)
+            with open(filename, 'r') as f:
+                read_data = f.read()
+            methods = re.findall("(\w+)\s*\(", read_data)  # Regex taken from Java.tmLanguage
 
-#             this_dir = this_file[:(dir_len + 1)] # + 1 for the '/'
-#             filename = this_dir + classname + ".java"
+        methods = list(set(methods))  # to remove duplicates
 
-#             with open(filename, 'r') as f:
-#                read_data = f.read()
-#             methods = re.findall("(\w+)\s*\(", read_data) #Regex taken from Java.tmLanguage
+        del completions[:]
 
-#         methods = list(set(methods)) #to remove duplicates
-
-#         del completions[:]
-
-#         for m in methods:
-#             m.strip('h')
-#             completions.append(m + "()")
+        for m in methods:
+            m.strip('h')
+            completions.append(m + "()")
     
 
-# class FillAutoComplete(sublime_plugin.EventListener):
-#     def on_query_completions(self, view, prefix, locations):
-#         return [(x, x) for x in completions]
+class FillAutoComplete(sublime_plugin.EventListener):
+    def on_query_completions(self, view, prefix, locations):
+        return [(x, x) for x in completions]

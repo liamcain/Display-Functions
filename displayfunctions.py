@@ -126,8 +126,13 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
 
             with open(filename, 'r') as f:
                 read_data = f.read()
-            methods = re.findall("(\w+)\s*\(", read_data)  # Regex taken from Java.tmLanguage
+            methods = re.findall("(\w+)\s*\(.*\){", read_data)  # Regex taken from Java.tmLanguage
+            comments = re.findall("/\*.*", read_data)
 
+            for c in comments:
+                for m in methods:
+                    if m in c:
+                        methods.remove(m)
         methods = list(set(methods))  # to remove duplicates
 
         del completions[:]

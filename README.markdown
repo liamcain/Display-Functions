@@ -1,7 +1,6 @@
-Display Functions (Sublime Text 2 Plugin)
-=========================================
+#Display Functions (Sublime Text 2 Plugin)
 
-####*\*Java Only\**
+###*\*Java Only\**
 
 Description
 =========

@@ -4,17 +4,8 @@ import re
 import os
 
 completions = []
-#
-#
-#  HAS PROBLEM DEALING WITH ' (). '
-#  Add fix to 'prev' and 'next' (if prev is '.' - 2)
-#
+
 class DisplayFunctionsCommand(sublime_plugin.TextCommand):
-
-
-    # start at last word.  Get object type, return completions
-    # Get object type: if word is not an object (if it's a method), get object type of prev word.  Then set object type as the return type of the current word (method)
-
 
     def is_method(self, word):
         word_checker = self.view.substr(word)
@@ -33,7 +24,6 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
         return False
 
     def run(self, edit):
-
         sel = self.view.sel()[0]
         word = self.view.word(sel.end() - 1)
 
@@ -45,7 +35,6 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
         if not 'void' in object_type:
             if self.add_functions(object_type):
                 self.view.run_command('auto_complete', {'disable_auto_insert': True})
-
         return
 
     def make_filename(self, classname):
@@ -63,7 +52,6 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
         return os.path.join(sublime.packages_path(), "Display-Functions")
 
     def prev(self, word):
-
         if '.' in self.view.substr(word.begin() - 1):
             num = 3
         else:
@@ -95,7 +83,7 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
             obj_type = self.get_return_type(prev_obj_type, word_region)
             return obj_type
 
-         # else:
+        # else:
         string = self.view.substr(word_region)
         regions = self.view.find_all('(?<![\\w])' + re.escape(string) + '\\b')
         for r in regions:
@@ -113,23 +101,20 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
                 str_fun = f.read().splitlines()
             return str_fun
 
-    #This function will take a classname and return a list of all the class methods
-    #Will use find_by_selector(selector)
+    #Takes a classname and returns a list of all the class methods
     def add_functions(self, classname):
-
         methods = self.check_str(classname, "String")
-        methods = self.check_str(classname, "Object")
+        if not methods:
+            methods = self.check_str(classname, "Object")
 
         if not methods:
-
             filename = self.make_filename(classname)
-
             with open(filename, 'r') as f:
                 read_data = f.read()
-            methods = re.findall("(\w+)\s*\(.*\)\s*{", read_data)  # Regex taken from Java.tmLanguage
+            methods = re.findall("(\w+)\s*\(.*\)\s*{", read_data)
             comments = re.findall("/\*.*", read_data)
 
-            for c in comments:
+            for c in comments:  # remove commented out methods from list
                 for m in methods:
                     if m in c:
                         methods.remove(m)
@@ -144,7 +129,6 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
             return True
         return False
     
-
 class FillAutoComplete(sublime_plugin.EventListener):
     def on_query_completions(self, view, prefix, locations):
         return [(x, x) for x in completions]

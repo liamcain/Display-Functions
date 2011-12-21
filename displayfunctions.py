@@ -34,7 +34,11 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
         object_type = self.get_obj_type(word)
         if not 'void' in object_type:
             if self.add_functions(object_type):
-                self.view.run_command('auto_complete', {'disable_auto_insert': True})
+                self.view.run_command('auto_complete', {
+                'disable_auto_insert': True,
+                'api_completions_only': True,
+                'next_competion_if_showing': False
+                })
         return
 
     def make_filename(self, classname):
@@ -77,6 +81,10 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
         obj_type = None
         prev_word = self.prev(word_region)
         
+        if 'super' in self.view.substr(word_region):
+            extend = self.view.find('extends', 0)
+            return self.view.substr(self.next(extend))
+
         #recursive case
         if self.is_method(word_region):
             prev_obj_type = self.get_obj_type(prev_word)
@@ -101,6 +109,29 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
                 str_fun = f.read().splitlines()
             return str_fun
 
+
+    def add_functions_helper(self, classname):
+        filename = self.make_filename(classname)
+        with open(filename, 'r') as f:
+            read_data = f.read()
+        methods = re.findall("(\w+)\s*\(.*\)\s*{", read_data)
+        comments = re.findall("/\*.*", read_data)
+        superclass = re.search("extends\s*(\w*)", read_data)
+
+        if superclass:
+            superclass = superclass.group()
+            superclass = superclass[8:]
+            for m in self.add_functions_helper(superclass):
+                methods.append(m)
+
+        for c in comments:  # remove commented out methods from list
+            for m in methods:
+                if m in c:
+                    methods.remove(m)
+        
+        return methods
+
+
     #Takes a classname and returns a list of all the class methods
     def add_functions(self, classname):
         methods = self.check_str(classname, "String")
@@ -108,22 +139,12 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
             methods = self.check_str(classname, "Object")
 
         if not methods:
-            filename = self.make_filename(classname)
-            with open(filename, 'r') as f:
-                read_data = f.read()
-            methods = re.findall("(\w+)\s*\(.*\)\s*{", read_data)
-            comments = re.findall("/\*.*", read_data)
+            methods = self.add_functions_helper(classname)
 
-            for c in comments:  # remove commented out methods from list
-                for m in methods:
-                    if m in c:
-                        methods.remove(m)
-        methods = list(set(methods))  # to remove duplicates
-
-        del completions[:]
+       # methods = list(set(methods))  # to remove duplicates
 
         for m in methods:
-            completions.append(m + "()")
+            completions.append(m + "($1)$0")
 
         if methods:
             return True
@@ -131,4 +152,4 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
     
 class FillAutoComplete(sublime_plugin.EventListener):
     def on_query_completions(self, view, prefix, locations):
-        return [(x, x) for x in completions]
+        return [(x, x) for x in list(set(completions))]

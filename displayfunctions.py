@@ -152,4 +152,4 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
     
 class FillAutoComplete(sublime_plugin.EventListener):
     def on_query_completions(self, view, prefix, locations):
-        return [(x, x) for x in list(set(completions))]
+        return [(x[:-6], x) for x in list(set(completions))]

@@ -114,9 +114,20 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
         filename = self.make_filename(classname)
         with open(filename, 'r') as f:
             read_data = f.read()
-        methods = re.findall("(\w+)\s*\(.*\)\s*{", read_data)
+ 
+        methods = []
+        method_lines = re.findall('public.*|protected.*', read_data)
+
+        for l in method_lines:
+            s = re.search('(\w+)\s*\(.*\)\s*(?=\{)', l)
+            if s:
+                methods.append(s.group().strip())
+
         comments = re.findall("/\*.*", read_data)
         superclass = re.search("extends\s*(\w*)", read_data)
+
+        print filename
+        print methods
 
         if superclass:
             superclass = superclass.group()
@@ -141,10 +152,8 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
         if not methods:
             methods = self.add_functions_helper(classname)
 
-       # methods = list(set(methods))  # to remove duplicates
-
         for m in methods:
-            completions.append(m + "($1)$0")
+            completions.append(m)
 
         if methods:
             return True
@@ -152,4 +161,15 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
     
 class FillAutoComplete(sublime_plugin.EventListener):
     def on_query_completions(self, view, prefix, locations):
-        return [(x[:-6], x) for x in list(set(completions))]
+        _completions = []
+        for c in list(set(completions)):
+            c_snip = c
+            params = re.findall('\w+\s\w+(?=\)|,)',c_snip)
+            num = 1
+            for p in params:
+                c_snip = c_snip.replace(p, '${' + str(num) + ':' + p + '}')
+                print 'c_snip', c_snip
+                num = num + 1
+            _completions.append((c, c_snip))
+        # del completions[:]
+        return _completions

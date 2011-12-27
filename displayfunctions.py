@@ -3,7 +3,6 @@ import sublime_plugin
 import re
 import os
 
-
 completions = []
 
 class DisplayFunctionsCommand(sublime_plugin.TextCommand):
@@ -28,7 +27,7 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
         sel = self.view.sel()[0]
         word = self.view.word(sel.end() - 1)
 
-        self.view.insert(edit, sel.end(), "._")  # Hackish fix for 2152
+        self.view.insert(edit, sel.end(), ".")
 
         if ')' in self.view.substr(sel.begin() - 1):
             word = self.prev(word)
@@ -171,6 +170,6 @@ class FillAutoComplete(sublime_plugin.EventListener):
                 c_snip = c_snip.replace(p, '${' + str(num) + ':' + p + '}')
                 print 'c_snip', c_snip
                 num = num + 1
-            _completions.append(('_' + c, c_snip))  # hackish fix for 2152
+            _completions.append((c, c_snip))
         # del completions[:]
         return _completions

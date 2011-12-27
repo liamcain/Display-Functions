@@ -32,7 +32,7 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
         if ')' in self.view.substr(sel.begin() - 1):
             word = self.prev(word)
         object_type = self.get_obj_type(word)
-        if not 'void' in object_type:
+        if object_type:
             if self.add_functions(object_type):
                 self.view.run_command('auto_complete', {
                 'disable_auto_insert': True,

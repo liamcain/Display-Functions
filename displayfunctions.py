@@ -32,14 +32,13 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
         if ')' in self.view.substr(sel.begin() - 1):
             word = self.prev(word)
         object_type = self.get_obj_type(word)
-        if not 'void' in object_type:
+        if object_type:
             if self.add_functions(object_type):
                 self.view.run_command('auto_complete', {
                 'disable_auto_insert': True,
                 'api_completions_only': True,
                 'next_competion_if_showing': False
                 })
-        return
 
     def make_filename(self, classname):
         this_file = self.view.file_name()
@@ -127,7 +126,6 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
         superclass = re.search("extends\s*(\w*)", read_data)
 
         print filename
-        print methods
 
         if superclass:
             superclass = superclass.group()
@@ -159,17 +157,19 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
             return True
         return False
     
-class FillAutoComplete(sublime_plugin.EventListener):
+class FunctionsAutoComplete(sublime_plugin.EventListener):
     def on_query_completions(self, view, prefix, locations):
         _completions = []
+            
         for c in list(set(completions)):
             c_snip = c
-            params = re.findall('\w+\s\w+(?=\)|,)',c_snip)
+            params = re.findall('\w+\s+\w+(?=\)|,)',c_snip)
             num = 1
             for p in params:
                 c_snip = c_snip.replace(p, '${' + str(num) + ':' + p + '}')
-                print 'c_snip', c_snip
                 num = num + 1
             _completions.append((c, c_snip))
-        # del completions[:]
-        return _completions
+
+        del completions[:]
+
+        return sorted(_completions)

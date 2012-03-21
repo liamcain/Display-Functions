@@ -1,7 +1,7 @@
 import sublime
 import sublime_plugin
 import re
-import os
+import os.path
 
 completions = []
 
@@ -39,6 +39,7 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
                 'api_completions_only': True,
                 'next_competion_if_showing': False
                 })
+                
 
     def make_filename(self, classname):
         this_file = self.view.file_name()
@@ -52,7 +53,7 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
         return this_dir + classname + ".java"
 
     def get_package_dir(self):
-        return os.path.join(sublime.packages_path(), "Display-Functions")
+        return os.path.join(sublime.packages_path(), "Display Functions (Java)")
 
     def prev(self, word):
         if '.' in self.view.substr(word.begin() - 1):
@@ -171,5 +172,5 @@ class FunctionsAutoComplete(sublime_plugin.EventListener):
             _completions.append((c, c_snip))
 
         del completions[:]
-
+        # return (x,x) for x in sorted(_completions)
         return sorted(_completions)

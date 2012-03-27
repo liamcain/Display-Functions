@@ -119,7 +119,7 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
         method_lines = re.findall('public.*|protected.*', read_data)
 
         for l in method_lines:
-            s = re.search('(\w+)\s*\(.*\)\s*(?=\{)', l)
+            s = re.search('(\w+)\s*\(.*\)(?=.*\{)', l)
             if s:
                 methods.append(s.group().strip())
 

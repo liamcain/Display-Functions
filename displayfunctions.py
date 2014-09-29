@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import sublime
 import sublime_plugin
 import re
@@ -126,7 +128,9 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
         comments = re.findall("/\*.*", read_data)
         superclass = re.search("extends\s*(\w*)", read_data)
 
-        print filename
+        ## Try statemnt added for Python 3 compatibility, which 
+        ## adds Sublime Text 3 compatibility
+        print (filename)
 
         if superclass:
             superclass = superclass.group()
@@ -144,7 +148,11 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
 
     #Takes a classname and returns a list of all the class methods
     def add_functions(self, classname):
-        methods = self.check_str(classname, "String")
+        for object_method_file in os.listdir(self.get_package_dir()):
+            if object_method_file[:-4] == classname:
+                methods = self.check_str(classname, object_method_file[:-4])
+       ## methods = self.check_str(classname, "String")
+       ## methods = self.check_str(classname, "Integer")
         if not methods:
             methods = self.check_str(classname, "Object")
 

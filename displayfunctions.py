@@ -128,8 +128,6 @@ class DisplayFunctionsCommand(sublime_plugin.TextCommand):
         comments = re.findall("/\*.*", read_data)
         superclass = re.search("extends\s*(\w*)", read_data)
 
-        ## Try statemnt added for Python 3 compatibility, which 
-        ## adds Sublime Text 3 compatibility
         print (filename)
 
         if superclass:
